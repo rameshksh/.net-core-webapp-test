@@ -1,0 +1,62 @@
+﻿@model IEnumerable<FitnessTestApp.Models.Athlete>
+
+@{
+    ViewData["Title"] = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="row">
+                <div class="col">
+                    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3" style="text-align: center; align-content: center; align-items: center">
+                        <div class="container" style="text-align:center;align-content:center">
+                            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index" style="text-align:center">YoYo-Web-App</a>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th valign="middle" align="center" style="text-align:center; vertical-align:central">
+                                    <h6>Name</h6>
+                                </th>
+                                <th valign="middle" align="center" style="text-align:center; vertical-align:central">
+                                    <h6>Level</h6>
+                                </th>
+                                <th valign="middle" align="center" style="text-align:center; vertical-align:central">
+                                    <h6>Shuttle Level</h6>
+                                </th>
+                                <th> <h6>Edit</h6></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td align="center">
+                                        @item.Name
+                                    </td>
+                                    <td align="center">
+                                        @item.Level
+                                    </td>
+                                    <td align="center">
+                                        @item.ShuttleLevel
+                                    </td>
+                                    <td align="center">
+                                        @Html.ActionLink("Edit", "Edit", "Home", new { id = @item.AthleteId, level = @item.Level, shuttleLevel = @item.ShuttleLevel })
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

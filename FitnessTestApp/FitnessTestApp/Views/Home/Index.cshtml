@@ -1,0 +1,221 @@
+﻿@model FitnessTestApp.ViewModels.HomeViewModel;
+@{
+    var services = Model;
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            &nbsp;
+
+        </div>
+        <div class="col-md-4">
+            <div class="row">
+                <div class="col">
+                    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3" style="text-align: center; align-content: center; align-items: center">
+                        <div class="container" style="text-align:center;display: block;align-content:center">
+                            <a class="navbar-brand font-weight-bold" asp-area="" asp-controller="Home" asp-action="Index" style="text-align:center">YoYo Fitness Test</a>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+            <div class="container shadow-lg p-3 mb-5 bg-white rounded">
+                <div class="container p-3 my-3 bg-info text-white">
+                    <div class="row">
+                        <div class="col font-italic">
+                            <p style="text-align:center">Next <br />Shuttle</p>
+                        </div>
+                        <div class="col font-italic">
+                            <p style="text-align:center">Total <br /> Time</p>
+                        </div>
+                        <div class="col font-italic">
+                            <p style="text-align:center">Total <br /> Distance</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <p id="nextShuttleDisplay" style="text-align: center">00:0 s</p>
+                        </div>
+                        <div class="col">
+                            <p id="stopWatchDisplay" style="text-align:center">00:00 m</p>
+                        </div>
+                        <div class="col">
+                            <p id="totalDistanceDisplay" style="text-align:center">0 m</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="progress" style="height:5px">
+                                <div class="progress-bar" id="progressbar" role="progressBar" style="width: 100%; display: none; background-color: red" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col" style="text-align:center">
+                        <div id="controls">
+                            <button id="startPause" class="btn btn-outline-success btn-circle btn-xl" onClick="startPause()"><i></i> Start</button>
+                        </div>
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col">
+                        <br />
+                        <p class="font-weight-bold">Track</p>
+                        <hr>
+                    </div>
+                </div>
+                @foreach (var athlete in Model.Athletes)
+                {
+                    <div class="row">
+                        <div class="col-6">
+                            <p>@athlete.AthleteId.ToString(). @athlete.Name</p>
+                            @Html.HiddenFor(model => model.Athletes)
+                        </div>
+                        <div class="col" style="text-align:right" id='result+@athlete.AthleteId'>
+
+                            <button id='btnwarn+@athlete.AthleteId' class="btn btn-secondary btn-curve btn-xl" onclick="warn(this.id)">Warn</button>&nbsp;<button id='btnstop+@athlete.AthleteId' class="btn btn-danger btn-curve btn-xl" onclick="stop('btnwarn+@athlete.AthleteId','result+@athlete.AthleteId',this.id,@athlete.AthleteId)">Stop</button>
+                        </div>
+                    </div>
+                }
+                <div class="row">
+                    <div class="col" style="text-align:right">
+                        <br />
+                        <button onclick="history.go(0)" class="btn btn-secondary" style="width:auto"> Reset </button>
+                        <button class="btn btn-outline-success" style="width:auto">
+                            <a href="#" style="text-decoration:none;" id="endTestLink" onclick="endtest(); return false;">End Test</a>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            &nbsp;
+
+        </div>
+    </div>
+</div>
+<script>
+    var time = 0;
+    var running = 0;
+    var fitnessScore = {};
+    var cummulative_seconds = 0;
+    var currentShuttleLevel = "";
+    var currentLevel = "";
+    var currentSpeed = "";
+    var totalNextShuttleTime = 0;
+    var firstime = true;
+    var previousLevel = "";
+    var previousShuttleLevel = "";
+    var query = '';
+    class FitnessScore {
+        constructor(AccumulatedShuttleDistance, SpeedLevel, ShuttleNo, Speed, LevelTime, CommulativeTime, StartTime) {
+            this.AccumulatedShuttleDistance = AccumulatedShuttleDistance;
+            this.SpeedLevel = SpeedLevel;
+            this.ShuttleNo = ShuttleNo;
+            this.Speed = Speed;
+            this.LevelTime = LevelTime;
+            this.CommulativeTime = CommulativeTime;
+            this.StartTime = StartTime;
+        }
+    }
+
+    window.onload = function(){
+        @foreach(string key in Model.FitnessScore.Keys)
+        {
+            <text>
+            fitnessScore['@key:1'] = new FitnessScore(@Model.FitnessScore[key].AccumulatedShuttleDistance, @Model.FitnessScore[key].SpeedLevel,@Model.FitnessScore[key].ShuttleNo,@Model.FitnessScore[key].Speed,@Model.FitnessScore[key].LevelTime,'@Model.FitnessScore[key].CommulativeTime','@Model.FitnessScore[key].StartTime');
+            </text>
+        }
+    }
+
+    function startPause() {
+        if (running == 0) {
+            running = 1;
+            document.getElementById("startPause").innerHTML = "<i class='glyphicon glyphicon-pause'></i> Level " + currentLevel
+                + "</br>Shuttle " + currentShuttleLevel
+                + "</br>" + currentSpeed + " km/h";
+            increment();
+            document.getElementById("progressbar").style.display = "block";
+        } else {
+            running = 0;
+            document.getElementById("startPause").innerHTML = "<i class='glyphicon glyphicon-repeat'></i> Resume";
+        }
+    }
+
+    function increment() {
+        if (running == 1) {
+            setTimeout(function () {
+                time++;
+                var mins = Math.floor(time / 10 / 60) % 60;
+                var secs = Math.floor(time / 10) % 60;
+                var tenths = time % 10;
+
+                var currenttime = ((mins * 60) + secs) * 10 + tenths;
+                var nextShuttle = cummulative_seconds - currenttime;
+
+                if (mins < 10) {
+                    mins = "0" + mins;
+                }
+                if (secs < 10) {
+                    secs = "0" + secs;
+                }
+                document.getElementById("stopWatchDisplay").innerHTML = mins + ":" + secs;
+                if (nextShuttle >= 0 && firstime == true) {
+                    firstime = false;
+                    totalNextShuttleTime = nextShuttle;
+                }
+                if (nextShuttle >= 0) {
+                    document.getElementById("nextShuttleDisplay").innerText = Math.ceil(nextShuttle / 10) + ":" + nextShuttle % 10;
+                    document.getElementById("progressbar").style.width = nextShuttle / totalNextShuttleTime * 100 + "%";
+                }
+                if (nextShuttle < 0) {
+                    document.getElementById("progressbar").style.width = "100%";
+                    firstime = true;
+                }
+
+                var startTime = mins + ":" + secs + ":" + tenths;
+                if (fitnessScore[startTime] != null) {
+                    var cummulativetime = fitnessScore[startTime].CommulativeTime.split(":");
+                    cummulative_seconds = (parseInt(cummulativetime[0]) * 60 + parseInt(cummulativetime[1])) * 10;
+
+                    previousLevel = currentLevel;
+                    previousShuttleLevel = currentShuttleLevel;
+                    currentLevel = fitnessScore[startTime].SpeedLevel;
+                    currentShuttleLevel = fitnessScore[startTime].ShuttleNo;
+                    currentSpeed = fitnessScore[startTime].Speed;
+                    document.getElementById("startPause").innerHTML = "<i class='glyphicon glyphicon-pause'></i> Level " + currentLevel
+                        + "</br>Shuttle " + currentShuttleLevel
+                        + "</br>" + currentSpeed + " km/h";
+                    document.getElementById("totalDistanceDisplay").innerText = fitnessScore[startTime].AccumulatedShuttleDistance - 40 +" m";
+                }
+                increment();
+            }, 100);
+        }
+    }
+    function warn(id) {
+        if (currentLevel != "" && currentShuttleLevel != "") {
+            var btnwarn = document.getElementById(id);
+            btnwarn.innerHTML = "Warned";
+            btnwarn.disabled = true;
+        }
+    }
+
+    function stop(warnid, resultid, stopid, id) {
+        if (currentLevel != "" && currentShuttleLevel != "") {
+            if (previousLevel == "") previousLevel = "0";
+            if (previousShuttleLevel == "") previousShuttleLevel = "0";
+            var btnstop = document.getElementById(stopid);
+            var btnwarn = document.getElementById(warnid);
+            btnstop.parentNode.removeChild(btnstop);
+            btnwarn.parentNode.removeChild(btnwarn);
+            var result = document.getElementById(resultid);
+            result.innerHTML = "<p class='font-weight-bold'>" + previousLevel + " - " + previousShuttleLevel + "</p>";
+            query = query + id + '%' + previousLevel + '%' + previousShuttleLevel + ':';
+            document.getElementById("endTestLink").href = "/Home/Detail?query=" + query;
+        }
+    }
+
+</script>
